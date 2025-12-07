@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NanoBanana Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://js.puter.com/v2/"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="header-left">
+                <div class="status-dot online"></div>
+                <span class="app-title">NanoBanana Terminal</span>
+                <span class="app-version">v2.0</span>
+            </div>
+            <div class="header-right">
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot online"></span>
+                    <span>CONNECTED</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal-body">
+            <div class="command-history" id="commandHistory">
+                <div class="log-line info">[SYSTEM] NanoBanana Terminal initialized</div>
+                <div class="log-line info">[SYSTEM] Type 'help' for available commands</div>
+            </div>
+
+            <div class="input-area">
+                <div class="prompt-line">
+                    <span class="prompt-sign">➜</span>
+                    <span class="prompt-path">~</span>
+                    <input type="text" class="command-input" id="commandInput" autocomplete="off" autofocus placeholder="Type command...">
+                </div>
+            </div>
+
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text" id="uploadText">Drag & drop reference image or click to upload (optional)</div>
+                    <div class="upload-preview" id="uploadPreview"></div>
+                </div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+            </div>
+
+            <div class="generation-section hidden" id="generationSection">
+                <div class="config-line">
+                    <span class="config-label">Model:</span>
+                    <select id="modelSelect" class="model-select">
+                        <option value="google/gemini-3-pro-image">Gemini 3 Pro (Quality)</option>
+                        <option value="gemini-2.5-flash-image-preview">Gemini 2.5 Flash (Fast)</option>
+                    </select>
+                </div>
+
+                <div class="result-container hidden" id="resultContainer">
+                    <div class="result-header">Generated Image</div>
+                    <div class="image-container" id="imageContainer"></div>
+                    <a href="#" id="downloadLink" class="download-btn">Download Image</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal-footer">
+            <div class="footer-left">
+                <span id="currentMode">READY</span>
+            </div>
+            <div class="footer-right">
+                <span id="statusText">System ready</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
