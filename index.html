@@ -6,7 +6,423 @@
     <title>NanoBanana Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://js.puter.com/v2/"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --terminal-bg: #111111;
+            --text: #e0e0e0;
+            --green: #00ff00;
+            --cyan: #00ffff;
+            --blue: #0088ff;
+            --yellow: #ffff00;
+            --red: #ff5555;
+            --gray: #666666;
+            --dark-gray: #222222;
+            --border: #333333;
+            --selection: #0088ff40;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--terminal-bg);
+            border: 1px solid var(--border);
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--dark-gray);
+            border-bottom: 1px solid var(--border);
+            user-select: none;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-dot.online {
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+        }
+        
+        .status-dot.offline {
+            background: var(--red);
+        }
+        
+        .status-dot.connecting {
+            background: var(--yellow);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .app-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--green);
+        }
+        
+        .app-version {
+            font-size: 12px;
+            color: var(--gray);
+            background: var(--border);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 8px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 3px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+        
+        .terminal-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .command-history {
+            flex: 1;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+        
+        .log-line {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            padding: 4px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border-left: 2px solid transparent;
+            padding-left: 10px;
+            margin-bottom: 4px;
+        }
+        
+        .log-line.info {
+            border-left-color: var(--blue);
+            color: var(--blue);
+        }
+        
+        .log-line.success {
+            border-left-color: var(--green);
+            color: var(--green);
+        }
+        
+        .log-line.error {
+            border-left-color: var(--red);
+            color: var(--red);
+        }
+        
+        .log-line.warning {
+            border-left-color: var(--yellow);
+            color: var(--yellow);
+        }
+        
+        .log-line.system {
+            border-left-color: var(--gray);
+            color: var(--gray);
+        }
+        
+        .input-area {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .prompt-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .prompt-sign {
+            color: var(--green);
+            font-weight: 600;
+        }
+        
+        .prompt-path {
+            color: var(--cyan);
+        }
+        
+        .command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            outline: none;
+            padding: 4px;
+        }
+        
+        .command-input::placeholder {
+            color: var(--gray);
+        }
+        
+        .upload-section {
+            margin: 20px 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .upload-area {
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .upload-area.dragover {
+            background: rgba(0, 255, 0, 0.05);
+            border: 2px dashed var(--green);
+        }
+        
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+        
+        .upload-text {
+            color: var(--gray);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-preview {
+            margin-top: 15px;
+            max-height: 150px;
+            overflow: hidden;
+        }
+        
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .generation-section {
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .config-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .config-label {
+            color: var(--gray);
+            font-size: 13px;
+        }
+        
+        .model-select {
+            background: var(--dark-gray);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .model-select:focus {
+            border-color: var(--blue);
+        }
+        
+        .result-container {
+            margin-top: 15px;
+        }
+        
+        .result-header {
+            color: var(--green);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .image-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 4px;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: var(--blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        
+        .download-btn:hover {
+            background: #0066cc;
+        }
+        
+        .terminal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: var(--dark-gray);
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+        }
+        
+        .footer-left {
+            color: var(--cyan);
+            font-weight: 500;
+        }
+        
+        .footer-right {
+            color: var(--gray);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--dark-gray);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border);
+        }
+        
+        ::selection {
+            background: var(--selection);
+            color: var(--text);
+        }
+        
+        .command-output {
+            color: var(--text);
+            font-size: 13px;
+            margin: 5px 0 15px 20px;
+            padding-left: 10px;
+            border-left: 1px solid var(--gray);
+        }
+        
+        .command-line {
+            color: var(--green);
+            font-size: 13px;
+            margin: 5px 0;
+        }
+        
+        .generation-status {
+            color: var(--yellow);
+            font-size: 12px;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid var(--yellow);
+        }
+        
+        .error-box {
+            color: var(--red);
+            background: rgba(255, 85, 85, 0.1);
+            border: 1px solid var(--red);
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
     <div class="terminal-container">
@@ -74,6 +490,476 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // Configuration
+        const CONFIG = {
+            maxFileSize: 5 * 1024 * 1024,
+            validImageTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+            models: {
+                'google/gemini-3-pro-image': {
+                    name: 'Gemini 3 Pro',
+                    options: { model: "google/gemini-3-pro-image", provider: "together-ai", disable_safety_checker: true }
+                },
+                'gemini-2.5-flash-image-preview': {
+                    name: 'Gemini 2.5 Flash',
+                    options: { model: "gemini-2.5-flash-image-preview", disable_safety_checker: true }
+                }
+            }
+        };
+
+        // App State
+        const STATE = {
+            mode: 'command',
+            currentPrompt: '',
+            referenceImage: null,
+            commandHistory: [],
+            historyIndex: -1,
+            isPuterInitialized: false
+        };
+
+        // DOM Elements
+        const elements = {
+            commandInput: document.getElementById('commandInput'),
+            commandHistory: document.getElementById('commandHistory'),
+            uploadArea: document.getElementById('uploadArea'),
+            uploadText: document.getElementById('uploadText'),
+            uploadPreview: document.getElementById('uploadPreview'),
+            fileInput: document.getElementById('fileInput'),
+            uploadSection: document.getElementById('uploadSection'),
+            generationSection: document.getElementById('generationSection'),
+            modelSelect: document.getElementById('modelSelect'),
+            resultContainer: document.getElementById('resultContainer'),
+            imageContainer: document.getElementById('imageContainer'),
+            downloadLink: document.getElementById('downloadLink'),
+            connectionStatus: document.getElementById('connectionStatus'),
+            currentMode: document.getElementById('currentMode'),
+            statusText: document.getElementById('statusText')
+        };
+
+        // Logger System
+        class Logger {
+            static log(type, message, data = null) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logElement = document.createElement('div');
+                logElement.className = `log-line ${type}`;
+                
+                let logText = `[${timestamp}] ${message}`;
+                
+                if (data && typeof data === 'object') {
+                    try {
+                        const dataStr = JSON.stringify(data);
+                        if (dataStr.length < 100) {
+                            logText += ` ${dataStr}`;
+                        }
+                    } catch (e) {}
+                }
+                
+                logElement.textContent = logText;
+                elements.commandHistory.appendChild(logElement);
+                elements.commandHistory.scrollTop = elements.commandHistory.scrollHeight;
+                
+                const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
+                console[consoleMethod](`[${timestamp}] ${type.toUpperCase()}: ${message}`, data || '');
+                
+                this.updateStatus(type, message);
+            }
+            
+            static info(message, data = null) { this.log('info', message, data); }
+            static success(message, data = null) { this.log('success', message, data); }
+            static error(message, data = null) { this.log('error', message, data); }
+            static warning(message, data = null) { this.log('warning', message, data); }
+            
+            static updateStatus(type, message) {
+                if (type === 'error') {
+                    elements.statusText.textContent = `Error: ${message.substring(0, 30)}`;
+                    elements.statusText.style.color = 'var(--red)';
+                } else if (type === 'success') {
+                    elements.statusText.textContent = message;
+                    elements.statusText.style.color = 'var(--green)';
+                } else if (type === 'warning') {
+                    elements.statusText.textContent = message;
+                    elements.statusText.style.color = 'var(--yellow)';
+                }
+            }
+            
+            static addOutput(message, isCommand = false) {
+                const outputElement = document.createElement('div');
+                outputElement.className = isCommand ? 'command-line' : 'command-output';
+                outputElement.textContent = message;
+                elements.commandHistory.appendChild(outputElement);
+                elements.commandHistory.scrollTop = elements.commandHistory.scrollHeight;
+            }
+        }
+
+        // Command Processing
+        function processCommand(command) {
+            command = command.trim();
+            if (!command) return;
+            
+            Logger.addOutput(`➜ ${command}`, true);
+            
+            const cmd = command.toLowerCase();
+            
+            switch (cmd) {
+                case 'help':
+                case 'h':
+                    showHelp();
+                    break;
+                    
+                case 'clear':
+                case 'c':
+                    elements.commandHistory.innerHTML = '';
+                    Logger.info('Terminal cleared');
+                    break;
+                    
+                case 'generate':
+                case 'g':
+                    startGeneration();
+                    break;
+                    
+                case 'upload':
+                case 'u':
+                    elements.fileInput.click();
+                    break;
+                    
+                case 'exit':
+                case 'quit':
+                case 'e':
+                case 'q':
+                    Logger.info('Exiting...');
+                    setTimeout(() => location.reload(), 1000);
+                    break;
+                    
+                default:
+                    if (cmd.startsWith('generate ') || cmd.startsWith('g ')) {
+                        const prompt = command.substring(cmd.indexOf(' ') + 1);
+                        startGenerationWithPrompt(prompt);
+                    } else {
+                        Logger.addOutput(`Unknown command: ${command}. Type 'help' for available commands.`);
+                    }
+            }
+        }
+
+        function showHelp() {
+            const helpText = `
+Available Commands:
+• help, h          - Show this help message
+• clear, c         - Clear terminal
+• generate, g      - Start image generation
+• upload, u        - Upload reference image
+• exit, quit, e, q - Exit application
+
+Generation Process:
+1. Type 'generate' or 'g'
+2. Enter your prompt
+3. Confirm with 'y' or 'yes'
+4. Wait for generation to complete
+    `.trim();
+            
+            Logger.addOutput(helpText);
+        }
+
+        function startGeneration() {
+            STATE.mode = 'prompt';
+            elements.currentMode.textContent = 'AWAITING PROMPT';
+            elements.currentMode.style.color = 'var(--yellow)';
+            
+            Logger.addOutput('Enter image description (prompt):');
+            elements.commandInput.placeholder = 'Type your prompt here...';
+        }
+
+        function startGenerationWithPrompt(prompt) {
+            STATE.currentPrompt = prompt;
+            STATE.mode = 'confirm';
+            
+            Logger.addOutput(`Prompt: "${prompt}"`);
+            Logger.addOutput('Start generation? (y/yes or n/no)');
+            
+            elements.commandInput.placeholder = 'y/n';
+            elements.currentMode.textContent = 'CONFIRMATION';
+            elements.currentMode.style.color = 'var(--cyan)';
+        }
+
+        function confirmGeneration(answer) {
+            const normalized = answer.trim().toLowerCase();
+            const positive = ['y', 'yes', 'да', 'д'];
+            const negative = ['n', 'no', 'нет', 'н'];
+            
+            if (positive.includes(normalized)) {
+                Logger.addOutput(answer);
+                Logger.addOutput('Starting generation...');
+                executeGeneration();
+            } else if (negative.includes(normalized)) {
+                Logger.addOutput(answer);
+                Logger.addOutput('Generation cancelled.');
+                resetToCommandMode();
+            } else {
+                Logger.addOutput('Invalid response. Please answer y/yes or n/no');
+            }
+        }
+
+        function resetToCommandMode() {
+            STATE.mode = 'command';
+            STATE.currentPrompt = '';
+            elements.commandInput.placeholder = 'Type command...';
+            elements.currentMode.textContent = 'READY';
+            elements.currentMode.style.color = 'var(--cyan)';
+            elements.generationSection.classList.add('hidden');
+            elements.resultContainer.classList.add('hidden');
+            elements.statusText.textContent = 'System ready';
+            elements.statusText.style.color = 'var(--gray)';
+        }
+
+        async function executeGeneration() {
+            STATE.mode = 'generating';
+            elements.commandInput.disabled = true;
+            elements.currentMode.textContent = 'GENERATING';
+            elements.currentMode.style.color = 'var(--green)';
+            elements.statusText.textContent = 'Generating image...';
+            elements.statusText.style.color = 'var(--yellow)';
+            
+            elements.generationSection.classList.remove('hidden');
+            elements.resultContainer.classList.add('hidden');
+            
+            Logger.info('Starting image generation', {
+                promptLength: STATE.currentPrompt.length,
+                hasReference: !!STATE.referenceImage
+            });
+            
+            try {
+                if (!STATE.isPuterInitialized && typeof puter === 'object') {
+                    try {
+                        puter.init({ name: 'NanoBanana Terminal' });
+                        STATE.isPuterInitialized = true;
+                        updateConnectionStatus(true);
+                        Logger.success('Puter API initialized');
+                    } catch (err) {
+                        updateConnectionStatus(false);
+                        Logger.warning('Puter API initialization failed');
+                    }
+                }
+                
+                const selectedModel = elements.modelSelect.value;
+                const modelConfig = CONFIG.models[selectedModel];
+                
+                if (!modelConfig) {
+                    throw new Error(`Unknown model: ${selectedModel}`);
+                }
+                
+                Logger.info(`Using model: ${modelConfig.name}`);
+                
+                const aiOptions = { ...modelConfig.options };
+                
+                const startTime = Date.now();
+                let resultImg;
+                
+                if (STATE.referenceImage) {
+                    Logger.info('Attempting image-to-image generation');
+                    try {
+                        const blob = dataURLtoBlob(STATE.referenceImage);
+                        const file = new File([blob], 'reference.jpg', { type: 'image/jpeg' });
+                        resultImg = await puter.ai.img2img(file, STATE.currentPrompt, aiOptions);
+                    } catch (imgError) {
+                        Logger.warning('Image editing failed, using text-to-image');
+                        resultImg = await puter.ai.txt2img(STATE.currentPrompt, aiOptions);
+                    }
+                } else {
+                    Logger.info('Using text-to-image generation');
+                    resultImg = await puter.ai.txt2img(STATE.currentPrompt, aiOptions);
+                }
+                
+                const generationTime = Date.now() - startTime;
+                
+                if (!resultImg || !resultImg.src) {
+                    throw new Error("No image data received");
+                }
+                
+                Logger.success(`Image generated in ${generationTime}ms`);
+                
+                elements.imageContainer.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = resultImg.src;
+                img.alt = 'Generated image';
+                elements.imageContainer.appendChild(img);
+                
+                const response = await fetch(resultImg.src);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                elements.downloadLink.href = url;
+                elements.downloadLink.download = `nanobanana-${Date.now()}.png`;
+                elements.downloadLink.onclick = () => {
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                };
+                
+                elements.resultContainer.classList.remove('hidden');
+                
+                elements.statusText.textContent = 'Generation successful';
+                elements.statusText.style.color = 'var(--green)';
+                
+            } catch (error) {
+                Logger.error('Generation failed', error.message);
+                
+                elements.imageContainer.innerHTML = `<div class="error-box">Error: ${error.message}</div>`;
+                elements.resultContainer.classList.remove('hidden');
+                
+                elements.statusText.textContent = 'Generation failed';
+                elements.statusText.style.color = 'var(--red)';
+            } finally {
+                elements.commandInput.disabled = false;
+                elements.commandInput.focus();
+                setTimeout(resetToCommandMode, 1000);
+            }
+        }
+
+        function dataURLtoBlob(dataurl) {
+            const arr = dataurl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            const u8arr = new Uint8Array(bstr.length);
+            for (let i = 0; i < bstr.length; i++) {
+                u8arr[i] = bstr.charCodeAt(i);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+
+        function handleFileUpload(file) {
+            if (!file) return;
+            
+            if (file.size > CONFIG.maxFileSize) {
+                Logger.error('File too large', `${(file.size / 1024 / 1024).toFixed(2)}MB > 5MB`);
+                return;
+            }
+            
+            if (!CONFIG.validImageTypes.includes(file.type)) {
+                Logger.error('Invalid file type', file.type);
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                STATE.referenceImage = e.target.result;
+                
+                elements.uploadText.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(0)}KB)`;
+                elements.uploadArea.classList.add('dragover');
+                
+                elements.uploadPreview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = STATE.referenceImage;
+                elements.uploadPreview.appendChild(img);
+                
+                Logger.success('Reference image loaded', {
+                    name: file.name,
+                    size: `${(file.size / 1024).toFixed(2)}KB`
+                });
+            };
+            
+            reader.onerror = () => {
+                Logger.error('Failed to read file');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusDot = elements.connectionStatus.querySelector('.status-dot');
+            const statusText = elements.connectionStatus.querySelector('span:last-child');
+            
+            if (connected) {
+                statusDot.className = 'status-dot online';
+                statusText.textContent = 'CONNECTED';
+                elements.connectionStatus.style.background = 'rgba(0, 255, 0, 0.1)';
+                elements.connectionStatus.style.borderColor = 'rgba(0, 255, 0, 0.3)';
+            } else {
+                statusDot.className = 'status-dot connecting';
+                statusText.textContent = 'CONNECTING';
+                elements.connectionStatus.style.background = 'rgba(255, 255, 0, 0.1)';
+                elements.connectionStatus.style.borderColor = 'rgba(255, 255, 0, 0.3)';
+            }
+        }
+
+        function init() {
+            elements.commandInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const command = elements.commandInput.value.trim();
+                    elements.commandInput.value = '';
+                    
+                    if (STATE.mode === 'command') {
+                        processCommand(command);
+                    } else if (STATE.mode === 'prompt') {
+                        if (command) {
+                            startGenerationWithPrompt(command);
+                        }
+                    } else if (STATE.mode === 'confirm') {
+                        confirmGeneration(command);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (STATE.commandHistory.length > 0 && STATE.historyIndex < STATE.commandHistory.length - 1) {
+                        STATE.historyIndex++;
+                        const historyItem = STATE.commandHistory[STATE.commandHistory.length - 1 - STATE.historyIndex];
+                        elements.commandInput.value = historyItem;
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (STATE.historyIndex > 0) {
+                        STATE.historyIndex--;
+                        const historyItem = STATE.commandHistory[STATE.commandHistory.length - 1 - STATE.historyIndex];
+                        elements.commandInput.value = historyItem;
+                    } else {
+                        STATE.historyIndex = -1;
+                        elements.commandInput.value = '';
+                    }
+                }
+            });
+            
+            elements.uploadArea.addEventListener('click', () => elements.fileInput.click());
+            elements.fileInput.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                elements.uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                elements.uploadArea.addEventListener(eventName, () => {
+                    elements.uploadArea.classList.add('dragover');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                elements.uploadArea.addEventListener(eventName, () => {
+                    elements.uploadArea.classList.remove('dragover');
+                }, false);
+            });
+            
+            elements.uploadArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files[0]) {
+                    handleFileUpload(files[0]);
+                }
+            }, false);
+            
+            if (typeof puter === 'object') {
+                updateConnectionStatus(true);
+                STATE.isPuterInitialized = true;
+            }
+            
+            elements.commandInput.focus();
+            
+            Logger.info('System initialized');
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
